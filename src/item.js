@@ -1,4 +1,5 @@
 import React from "react";
+import myService from "./myservice";
 //import {Component} from "react";
 
 
@@ -9,19 +10,35 @@ export default class Item extends React.Component {
 			visible: true,
 			currentText: "",
 			posX: "",
-			posY: ""
+			posY: "",
+			btnGetTempStyleText: "Start getting current temperature",
+			responseObj: null,
+			err: false
 		}
-		this.btnStyle = {
+
+		this.btnDeleteStyle = {
 			position: "absolute",
-			bottom: "5px",
+			top: "5px",
 			right: "5px" 
 		}
+
+		this.btnGetTempStyle = {
+			position: "absolute",
+			bottom: "5px",
+			left: "5px",
+			right: "5px"
+		}
+
 		this.trackMouse = this.trackMouse.bind(this);
+		this.getTemperature = this.getTemperature.bind(this);
 
 		this.deltaX = 0;
 		this.deltaY = 0;
 
 		this.inEditMode = false;
+		this.requestingTemperatureMode = false;
+		this.timerId;
+		this.timerDelay = 4000;
 	}
 
 	componentWillMount(){
@@ -78,8 +95,55 @@ export default class Item extends React.Component {
 
 			this.setState({posX: posX, posY: posY});
 		}
-
 		// this.setState({posX: e.pageX, posY: e.pageY});
+	}
+
+	tempModeEnter() {
+		let city = this.state.currentText; 
+		if(city === "" || city === this.props.emptyNoteText)
+		{
+			alert("You must enter the name of city!");
+			return;
+		}
+
+		if(this.requestingTemperatureMode) {
+			clearInterval(this.timerId);
+			this.setState({responseObj: ""});
+		} else {
+			this.timerId = setInterval( () => {
+
+				let wUrl = `http://api.openweathermap.org/data/2.5/weather?q=${city}&APPID=875012f111377f30bfe2073d73e59ee8&units=metric`;
+
+				myService(wUrl).then( data => {
+					this.setState({responseObj: data}, () => {
+						console.log(this.state);
+					})
+				}, err => {
+					this.setState({err: true}, () => {
+						console.log(err);
+					})
+				} );		
+			}, this.timerDelay);
+		}
+
+		this.requestingTemperatureMode = !this.requestingTemperatureMode;
+		this.setState({btnGetTempStyleText: this.requestingTemperatureMode ? "Stop getting current temperature" : "Start getting current temperature"});
+	}
+
+	getTemperature(city){
+		let cityName = city;
+		// let wUrl = "http://api.openweathermap.org/data/2.5/weather?q=Minsk,by&APPID=875012f111377f30bfe2073d73e59ee8&units=metric";
+		let wUrl = `http://api.openweathermap.org/data/2.5/weather?q=${cityName}&APPID=875012f111377f30bfe2073d73e59ee8&units=metric`;
+
+		myService(wUrl).then( data => {
+			this.setState({responseObj: data}, () => {
+				console.log(this.state);
+			})
+		}, err => {
+			this.setState({err: true}, () => {
+				console.log(err);
+			})
+		} );
 	}
 
 	deleteNote(){
@@ -87,6 +151,12 @@ export default class Item extends React.Component {
 	}
 
 	render() {
+		if(this.state.err){
+			return <div>Oops!!! We have a problems!</div>
+		}
+
+		let responseObj = this.state.responseObj ? this.state.responseObj.main.temp : "";
+		let temperatureText = responseObj !== "" ? `${responseObj} \u00B0 C` : responseObj;
 
 		return (
 			<div 
@@ -98,12 +168,12 @@ export default class Item extends React.Component {
 						top: this.state.posY + "px"	} }
 				onMouseDown={this.startMove.bind(this)}
 				onMouseUp={this.stopMove.bind(this)}			
-						>
+				>
 				<div 
 					className="note_text"
 					style={ {display: this.state.visible ? "block" : "none"} }
 					onDoubleClick={ this.enterEditMode.bind(this) }>
-					{this.state.currentText}
+					<b>{this.state.currentText}</b><br/>{temperatureText}
 				</div>
 				<textarea 
 					onDoubleClick={ this.changeView.bind(this) }
@@ -111,9 +181,16 @@ export default class Item extends React.Component {
 					value={this.state.currentText}
 					style={ {display: this.state.visible ? "none" : "block"} }>
 				</textarea>
+				<button
+					style= { this.btnGetTempStyle }
+					// onClick={this.getTemperature.bind(this)}
+					onClick={this.tempModeEnter.bind(this)}
+				>
+					{this.state.btnGetTempStyleText}
+				</button>
 
 				<button 
-					style={ this.btnStyle }
+					style={ this.btnDeleteStyle }
 					/*onClick={ () => {
 						this.props.deleteItem(this.props.itemIndex)
 					} } */

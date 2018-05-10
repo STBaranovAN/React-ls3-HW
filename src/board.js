@@ -6,6 +6,7 @@ export default class Board extends React.Component {
 	constructor(props){
 		super(props);
 		this.addNote = this.addNote.bind(this);
+		this.emptyNoteText = "Enter city name by double click";
 
 		this.state = {
 			allNotes: []
@@ -60,7 +61,7 @@ export default class Board extends React.Component {
 	addNote(){
 
 		let noteObj = {
-			text: "Add new note",
+			text: this.emptyNoteText,
 			posX: 50,
 			posY: 50,
 			id: uuid.v4()
@@ -100,6 +101,7 @@ export default class Board extends React.Component {
 				posX={item.posX}
 				posY={item.posY}
 				itemIndex={index}
+				emptyNoteText={this.emptyNoteText}
 				changeText={this.changeText.bind(this)}
 				changePos={this.changePos.bind(this)}
 				deleteNote={this.deleteNote.bind(this)}
