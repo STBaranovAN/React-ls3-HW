@@ -57,8 +57,10 @@ body, html, #container {
 
 	.note textarea {
 		position: absolute;
-		width: 100%;
+		width: 80%;
 		height: 50%;
+		left: 5px;
+		top: 5px;
 		resize: none;
 		box-sizing: border-box;
 		/*display: none;*/
