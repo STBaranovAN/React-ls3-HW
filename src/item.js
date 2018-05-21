@@ -1,5 +1,6 @@
 import React from "react";
 import myService from "./myservice";
+import axios from "axios";
 //import {Component} from "react";
 
 
@@ -38,6 +39,7 @@ export default class Item extends React.Component {
 		this.timerId = null;
 		this.timerDelay = 5000;
 		this.responseObj = null;
+		this.notFoundErrorText = "Info by city not found!";
 	}
 
 	componentWillMount(){
@@ -48,7 +50,7 @@ export default class Item extends React.Component {
 		});
 	}
 
-	componentDidMount(){
+	/* componentDidMount(){
 		let responseObj = this.responseObj;
 		if(responseObj)
 		{
@@ -61,7 +63,7 @@ export default class Item extends React.Component {
 				temperatureText = `${this.responseObj.main.temp} \u00B0 C`;
 			} else {
 				inTempMode = false;
-				temperatureText = "Info by city not found!";
+				temperatureText = this.notFoundErrorText;
 				clearInterval(this.timerId);
 				// this.enterGetTempMode();
 			}
@@ -71,6 +73,35 @@ export default class Item extends React.Component {
 				tempText: temperatureText,
 				err: !hasData
 			}); 
+		}
+	} */
+
+	componentDidMount(){
+		if(this.responseObj)
+		{
+			let responseData = this.responseObj.hasOwnProperty("data") ? this.responseObj.data : null;
+			if(responseData)
+			{
+				let temperatureText = "";
+				let hasData = responseData.hasOwnProperty("main");
+				let inTempMode;
+
+				if(hasData) {
+					inTempMode = true;
+					temperatureText = `${responseData.main.temp} \u00B0 C`;
+				} else {
+					inTempMode = false;
+					temperatureText = this.notFoundErrorText;
+					clearInterval(this.timerId);
+					// this.enterGetTempMode();
+				}
+
+				this.setState({
+					inTempMode: inTempMode,
+					tempText: temperatureText,
+					err: !hasData
+				}); 
+			}
 		}
 	}
 
@@ -133,12 +164,18 @@ export default class Item extends React.Component {
 			this.timerId = setInterval( () => {
 				let wUrl = `http://api.openweathermap.org/data/2.5/weather?q=${city}&APPID=875012f111377f30bfe2073d73e59ee8&units=metric`;
 
-				myService(wUrl).then( data => {
+				axios.get(wUrl).then( data => {
 					this.responseObj = data;
 					this.componentDidMount();
 				}, err => {
 					this.setState({err: true}, () => {
+						clearInterval(this.timerId);
 						console.log(err);
+						this.setState({
+							inTempMode: false,
+							tempText: this.notFoundErrorText,
+							err: true
+						}); 
 					})
 				} );		
 			}, this.timerDelay);
