@@ -163,7 +163,6 @@ export default class Item extends React.Component {
 		} else {
 			this.timerId = setInterval( () => {
 				let wUrl = `http://api.openweathermap.org/data/2.5/weather?q=${city}&APPID=875012f111377f30bfe2073d73e59ee8&units=metric`;
-
 				axios.get(wUrl).then( data => {
 					this.responseObj = data;
 					this.componentDidMount();
